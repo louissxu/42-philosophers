@@ -16,83 +16,155 @@
 
 #define NUM_THREADS 5
 
-typedef struct s_thread_data
+typedef struct s_input_data
 {
-	int		thread_id;
-	double	value;
-	double	value2;
-}	t_thread_data;
+	int		number_of_philosophers;
+	int		time_to_die;
+	int		time_to_eat;
+	int 	time_to_sleep;
+	BOOL	infinite_simulation;
+	int		number_of_times_each_philosopher_must_eat;
+	struct timeval	start_time;
+}	t_input_data;
 
-typedef struct s_philosopher
+typedef struct s_philosopher_data
 {
 	int	id;
-	pthread_mutex_t	*fork_locks;
-}	t_philosopher;
+	pthread_mutex_t	*fork_l;
+	pthread_mutex_t *fork_r;
+	t_input_data	*input_data;
+}	t_philosopher_data;
 
-typedef struct s_data
+
+
+typedef struct s_main_data
 {
-	pthread_mutex_t	fork_locks[NUM_THREADS];
-	t_philosopher	philosophers[NUM_THREADS];
+	t_input_data		input_data;
+	pthread_t			threads[NUM_THREADS];
+	pthread_mutex_t		fork_locks[NUM_THREADS];
+	t_philosopher_data	philosophers_data[NUM_THREADS];
+	// struct timeval		start_time;
+}	t_main_data;
 
-}	t_data;
-
-double global_shared_x;
-pthread_mutex_t lock_x;
-
-void	*philosopher_thread(void *args)
+void	print_timestamp(struct timeval start_time)
 {
-	t_philosopher	*philosopher_data;
+	struct timeval	current_time;
+	long int	delta_ms;
 
-	philosopher_data = (philosopher_data *)args;
-	printf("Philosopher %i is running\n", philosopher_data->id)
+	gettimeofday(&current_time, NULL);
+	delta_ms = (current_time.tv_sec - start_time.tv_sec) * 1000 + (current_time.tv_usec - start_time.tv_usec) / 1000;
+	printf("%ld", delta_ms);
 	
 }
 
-void	*thread_function(void *args)
+void	*philosopher_thread(void *args)
 {
-	t_thread_data	*data;
+	t_philosopher_data	*philosopher_data;
 
-	data = (t_thread_data *)args;
-	printf("Running thread. Thread number %i\n", data->thread_id);
-	pthread_mutex_lock(&lock_x);
-	global_shared_x += 10;
-	printf("The current x value is: %f\n", global_shared_x);
-	pthread_mutex_unlock(&lock_x);
+	philosopher_data = (t_philosopher_data *)args;
+	print_timestamp(philosopher_data->input_data->start_time);
+	printf("Philosopher %i is thinking (and waiting for forks)\n", philosopher_data->id);
+	pthread_mutex_lock(philosopher_data->fork_r);
+	pthread_mutex_lock(philosopher_data->fork_l);
+	print_timestamp(philosopher_data->input_data->start_time);
+	printf("Philosopher %i is done thinking (and has the forks)\n", philosopher_data->id);
+	print_timestamp(philosopher_data->input_data->start_time);
+	printf("Philosopher %i is eating\n", philosopher_data->id);
+	usleep(philosopher_data->input_data->time_to_eat * 1000);
+	pthread_mutex_unlock(philosopher_data->fork_r);
+	pthread_mutex_unlock(philosopher_data->fork_l);
+	print_timestamp(philosopher_data->input_data->start_time);
+	printf("Philosopher %i is done eating\n", philosopher_data->id);
 
 	pthread_exit(NULL);
+	
+}
+
+int	philo_simple_atoi(const char *str)
+{
+	long int	result;
+	int			post_mult;
+	size_t		i;
+
+	result = 0;
+	post_mult = 1;
+	i = 0;
+	if (str[i] == '-')
+	{
+		post_mult = -1;
+		i++;
+	}
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		result *= 10;
+		result += str[i] - '0';
+		i++;
+	}
+	return (int)(result * post_mult);
 }
 
 int	main(int argc, char **argv)
 {
-	pthread_t		threads[NUM_THREADS];
-	t_thread_data	thread_data[NUM_THREADS];
-	// pthread_mutex_t	fork_locks[NUM_THREADS];
+	t_main_data		main_data;
 	int				i;
 	int				rc;
 
-	argc++;
-	argv++;
+	if (argc < 5 || argc > 6)
+	{
+		printf("Error: Number of args needs to be 4 or 5\n");
+		return (EXIT_SUCCESS);
+	}
+	main_data.input_data.number_of_philosophers = philo_simple_atoi(argv[1]);
+	main_data.input_data.time_to_die = philo_simple_atoi(argv[2]);
+	main_data.input_data.time_to_eat = philo_simple_atoi(argv[3]);
+	main_data.input_data.time_to_sleep = philo_simple_atoi(argv[4]);
+	main_data.input_data.infinite_simulation = TRUE;
+	if (argc == 6)
+	{
+		main_data.input_data.infinite_simulation = FALSE;
+		main_data.input_data.number_of_times_each_philosopher_must_eat = philo_simple_atoi(argv[5]);
+	}
 
-	global_shared_x = 11;
-	pthread_mutex_init(&lock_x, NULL);
+	if ((rc = gettimeofday(&main_data.input_data.start_time, NULL)))
+	{
+		printf("error: gettimeofday, rc: %d\n", rc);
+		return (EXIT_FAILURE);
+	}
 
 	i = 0;
 	while (i < NUM_THREADS)
 	{
-		thread_data[i].thread_id = i;
-		if ((rc = pthread_create(&threads[i], NULL, thread_function, &thread_data[i])))
+		pthread_mutex_init(&main_data.fork_locks[i], NULL);
+		i++;
+	}
+
+	i = 0;
+	while (i < NUM_THREADS)
+	{
+		main_data.philosophers_data[i].id = i + 1;
+		main_data.philosophers_data[i].input_data = &main_data.input_data;
+		if (i == 0)
 		{
-			printf("error: pthread_create, rc: %d\n", rc);
+			main_data.philosophers_data[i].fork_r = &main_data.fork_locks[NUM_THREADS - 1];
+			main_data.philosophers_data[i].fork_l = &main_data.fork_locks[i];
+		}
+		else
+		{
+			main_data.philosophers_data[i].fork_r = &main_data.fork_locks[i];
+			main_data.philosophers_data[i].fork_l = &main_data.fork_locks[i - 1];
+		}
+		if ((rc = pthread_create(&main_data.threads[i], NULL, philosopher_thread, &main_data.philosophers_data[i])))
+		{
+			printf("error: pthread_create, i: %i  rc: %d\n", i, rc);
 			return (EXIT_FAILURE);
 		}
-		printf("std: rc is: %d\n", rc);
 		i++;
 	}
 	printf("starting program");
 	i = 0;
 	while (i < NUM_THREADS)
 	{
-		pthread_join(threads[i], NULL);
+		pthread_join(main_data.threads[i], NULL);
 		i++;
 	}
 	return (EXIT_SUCCESS);
