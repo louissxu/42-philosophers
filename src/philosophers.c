@@ -101,8 +101,8 @@ BOOL	philo_try_eat(void *args)
 	}
 	if (time_since(p->p_l->last_ate) > time_since(p->last_ate) || time_since(p->p_r->last_ate) > time_since(p->last_ate))
 	{
-		if (time_since(p->p_l->last_ate) + p->input_data->time_to_eat > p->input_data->time_to_die || \
-			time_since(p->p_r->last_ate) + p->input_data->time_to_eat > p->input_data->time_to_die)
+		if (time_since(p->p_l->last_ate) + p->input_data->time_to_eat + 5 > p->input_data->time_to_die || \
+			time_since(p->p_r->last_ate) + p->input_data->time_to_eat + 5 > p->input_data->time_to_die)
 		{
 			// print_line(p->input_data->start_time, p->id, "unlocking without success");
 			pthread_mutex_unlock(&p->waiter->lock);
