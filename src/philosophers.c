@@ -38,6 +38,8 @@ typedef struct s_philosopher_data
 	int	id;
 	int	fork_l;
 	int fork_r;
+	struct s_philosopher_data	*p_l;
+	struct s_philosopher_data	*p_r;
 	int times_eaten;
 	struct timeval	last_ate;
 	t_input_data	*input_data;
@@ -85,24 +87,31 @@ BOOL	philo_try_eat(void *args)
 
 	p = (t_philosopher_data *)args;
 	pthread_mutex_lock(&p->waiter->lock);
-	print_line(p->input_data->start_time, p->id, "has locked the waiter");
 	if (p->waiter->someone_has_died)
 	{
+		pthread_mutex_unlock(&p->waiter->lock);
 		pthread_exit(NULL);
 	}
 	if (time_since(p->last_ate) > p->input_data->time_to_die)
 	{
-		print_line(p->input_data->start_time, p->id, "has died");
+		print_line(p->input_data->start_time, p->id, "died");
 		p->waiter->someone_has_died = TRUE;
+		pthread_mutex_unlock(&p->waiter->lock);
 		pthread_exit(NULL);
+	}
+	if (time_since(p->p_l->last_ate) > time_since(p->last_ate) || time_since(p->p_r->last_ate) > time_since(p->last_ate))
+	{
+		// print_line(p->input_data->start_time, p->id, "unlocking without success");
+		pthread_mutex_unlock(&p->waiter->lock);
+		return (FALSE);
 	}
 	if (p->waiter->fork_in_use[p->fork_l] == TRUE || p->waiter->fork_in_use[p->fork_r] == TRUE)
 	{
-		print_line(p->input_data->start_time, p->id, "unlocking without success");
+		// print_line(p->input_data->start_time, p->id, "unlocking without success");
 		pthread_mutex_unlock(&p->waiter->lock);
-		usleep(1000 * 200);
 		return (FALSE);
 	}
+	print_line(p->input_data->start_time, p->id, "has locked the waiter");
 	pthread_mutex_lock(&p->waiter->fork_locks[p->fork_l]);
 	p->waiter->fork_in_use[p->fork_l] = TRUE;
 	print_took_fork(p->input_data->start_time, p->id, p->fork_l);
@@ -135,8 +144,8 @@ void	philo_eat(void *args)
 	ate_successfully = FALSE;
 	while (ate_successfully == FALSE)
 	{
+		// usleep(1); // Necessary?
 		ate_successfully = philo_try_eat(p);
-		// usleep(10); // Necessary?
 	}
 }
 
@@ -230,7 +239,7 @@ int	main(int argc, char **argv)
 		main_data.input_data.infinite_simulation = FALSE;
 		main_data.input_data.number_of_times_each_philosopher_must_eat = philo_simple_atoi(argv[5]);
 	}
-
+	pthread_mutex_init(&main_data.waiter.lock, NULL);
 	main_data.waiter.fork_in_use = malloc(sizeof (BOOL) * main_data.input_data.number_of_philosophers);
 	main_data.waiter.fork_locks = malloc(sizeof (pthread_mutex_t) * main_data.input_data.number_of_philosophers);
 	main_data.threads = malloc(sizeof (pthread_t) * main_data.input_data.number_of_philosophers);
@@ -252,6 +261,7 @@ int	main(int argc, char **argv)
 
 	i = 0;
 	pthread_mutex_lock(&main_data.waiter.lock);
+
 	while (i < main_data.input_data.number_of_philosophers)
 	{
 		main_data.philosophers_data[i].id = i;
@@ -269,6 +279,23 @@ int	main(int argc, char **argv)
 		main_data.philosophers_data[i].last_ate = main_data.input_data.start_time;
 		main_data.philosophers_data[i].input_data = &main_data.input_data;
 		main_data.philosophers_data[i].waiter = &main_data.waiter;
+		
+		if (i == 0)
+		{
+			main_data.philosophers_data[i].p_r = &main_data.philosophers_data[i + 1];
+			main_data.philosophers_data[i].p_l = &main_data.philosophers_data[main_data.input_data.number_of_philosophers - 1];
+		}
+		else if (i == main_data.input_data.number_of_philosophers - 1)
+		{
+			main_data.philosophers_data[i].p_r = &main_data.philosophers_data[0];
+			main_data.philosophers_data[i].p_l = &main_data.philosophers_data[i - 1];
+		}
+		else
+		{
+			main_data.philosophers_data[i].p_r = &main_data.philosophers_data[i + 1];
+			main_data.philosophers_data[i].p_l = &main_data.philosophers_data[i - 1];
+		}
+
 		if ((rc = pthread_create(&main_data.threads[i], NULL, philosopher_thread, &main_data.philosophers_data[i])))
 		{
 			printf("error: pthread_create, i: %i  rc: %d\n", i, rc);
@@ -277,7 +304,7 @@ int	main(int argc, char **argv)
 		i++;
 	}
 	printf("starting program\n");
-	// pthread_mutex_unlock(&main_data.waiter.lock);
+	pthread_mutex_unlock(&main_data.waiter.lock);
 	i = 0;
 	while (i < main_data.input_data.number_of_philosophers)
 	{
