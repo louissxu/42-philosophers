@@ -46,15 +46,14 @@ typedef struct s_main_data
 	// struct timeval		start_time;
 }	t_main_data;
 
-void	print_timestamp(struct timeval start_time)
+void	print_line(struct timeval start_time, int philo_name, char *str)
 {
 	struct timeval	current_time;
 	long int	delta_ms;
 
 	gettimeofday(&current_time, NULL);
 	delta_ms = (current_time.tv_sec - start_time.tv_sec) * 1000 + (current_time.tv_usec - start_time.tv_usec) / 1000;
-	printf("%ld", delta_ms);
-	
+	printf("%5ld Philosopher %i is %s\n", delta_ms, philo_name, str);
 }
 
 void	*philosopher_thread(void *args)
@@ -62,19 +61,16 @@ void	*philosopher_thread(void *args)
 	t_philosopher_data	*philosopher_data;
 
 	philosopher_data = (t_philosopher_data *)args;
-	print_timestamp(philosopher_data->input_data->start_time);
-	printf("Philosopher %i is thinking (and waiting for forks)\n", philosopher_data->id);
-	pthread_mutex_lock(philosopher_data->fork_r);
+	print_line(philosopher_data->input_data->start_time, philosopher_data->id, "thinking (and waiting for forks)");
+	pthread_mutex_lock(philosopher_data->fork_r);;
+	print_line(philosopher_data->input_data->start_time, philosopher_data->id, "picked up right (1st) fork");
 	pthread_mutex_lock(philosopher_data->fork_l);
-	print_timestamp(philosopher_data->input_data->start_time);
-	printf("Philosopher %i is done thinking (and has the forks)\n", philosopher_data->id);
-	print_timestamp(philosopher_data->input_data->start_time);
-	printf("Philosopher %i is eating\n", philosopher_data->id);
+	print_line(philosopher_data->input_data->start_time, philosopher_data->id, "picked up left (2nd) fork");
+	print_line(philosopher_data->input_data->start_time, philosopher_data->id, "eating");
 	usleep(philosopher_data->input_data->time_to_eat * 1000);
 	pthread_mutex_unlock(philosopher_data->fork_r);
 	pthread_mutex_unlock(philosopher_data->fork_l);
-	print_timestamp(philosopher_data->input_data->start_time);
-	printf("Philosopher %i is done eating\n", philosopher_data->id);
+	print_line(philosopher_data->input_data->start_time, philosopher_data->id, "done eating and put back the forks");
 
 	pthread_exit(NULL);
 	
@@ -160,7 +156,7 @@ int	main(int argc, char **argv)
 		}
 		i++;
 	}
-	printf("starting program");
+	printf("starting program\n");
 	i = 0;
 	while (i < NUM_THREADS)
 	{
