@@ -101,9 +101,13 @@ BOOL	philo_try_eat(void *args)
 	}
 	if (time_since(p->p_l->last_ate) > time_since(p->last_ate) || time_since(p->p_r->last_ate) > time_since(p->last_ate))
 	{
-		// print_line(p->input_data->start_time, p->id, "unlocking without success");
-		pthread_mutex_unlock(&p->waiter->lock);
-		return (FALSE);
+		if (time_since(p->p_l->last_ate) + p->input_data->time_to_eat > p->input_data->time_to_die || \
+			time_since(p->p_r->last_ate) + p->input_data->time_to_eat > p->input_data->time_to_die)
+		{
+			// print_line(p->input_data->start_time, p->id, "unlocking without success");
+			pthread_mutex_unlock(&p->waiter->lock);
+			return (FALSE);
+		}
 	}
 	if (p->waiter->fork_in_use[p->fork_l] == TRUE || p->waiter->fork_in_use[p->fork_r] == TRUE)
 	{
@@ -111,15 +115,15 @@ BOOL	philo_try_eat(void *args)
 		pthread_mutex_unlock(&p->waiter->lock);
 		return (FALSE);
 	}
-	print_line(p->input_data->start_time, p->id, "has locked the waiter");
+	// print_line(p->input_data->start_time, p->id, "has locked the waiter");
 	pthread_mutex_lock(&p->waiter->fork_locks[p->fork_l]);
 	p->waiter->fork_in_use[p->fork_l] = TRUE;
-	print_took_fork(p->input_data->start_time, p->id, p->fork_l);
+	// print_took_fork(p->input_data->start_time, p->id, p->fork_l);
 	pthread_mutex_lock(&p->waiter->fork_locks[p->fork_r]);
 	p->waiter->fork_in_use[p->fork_r] = TRUE;
-	print_took_fork(p->input_data->start_time, p->id, p->fork_r);
+	// print_took_fork(p->input_data->start_time, p->id, p->fork_r);
 	print_line(p->input_data->start_time, p->id, "is eating");
-	print_line(p->input_data->start_time, p->id, "is unlocking the waiter");
+	// print_line(p->input_data->start_time, p->id, "is unlocking the waiter");
 	pthread_mutex_unlock(&p->waiter->lock);
 
 
