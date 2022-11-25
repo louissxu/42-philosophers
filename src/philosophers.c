@@ -35,6 +35,24 @@ typedef struct	s_waiter_data
 	BOOL			someone_has_died;
 }	t_waiter_data;
 
+typedef struct	s_philosopher_data
+{
+	int	id;
+	int	fork_l;
+	int	fork_r;
+	int times_eaten;
+	struct timeval	last_ate;
+}	t_philosopher_data;
+
+typedef struct	s_thread_data
+{
+	t_philosopher_data	*philo;
+	t_philosopher_data	*philo_l;
+	t_philosopher_data	*philo_r;
+	t_input_data		*input_data;
+	t_waiter_data		*waiter;
+}
+
 typedef struct s_philosopher_data
 {
 	int	id;
