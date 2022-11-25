@@ -192,11 +192,14 @@ void	philo_sleep(void *args)
 	t_thread_data	*t;
 
 	t = (t_thread_data *)args;
+	pthread_mutex_lock(&t->waiter->lock);
 	if (t->waiter->someone_has_died)
 	{
+		pthread_mutex_unlock(&t->waiter->lock);
 		pthread_exit(NULL);
 	}
 	print_line(t->input_data->start_time, t->philo->id, "is sleeping");
+	pthread_mutex_unlock(&t->waiter->lock);
 	usleep(t->input_data->time_to_sleep * 1000);
 }
 
@@ -205,11 +208,14 @@ void	philo_think(void *args)
 	t_thread_data	*t;
 
 	t = (t_thread_data *)args;
+	pthread_mutex_lock(&t->waiter->lock);
 	if (t->waiter->someone_has_died)
 	{
+		pthread_mutex_unlock(&t->waiter->lock);
 		pthread_exit(NULL);
 	}
 	print_line(t->input_data->start_time, t->philo->id, "is thinking");
+	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	*philosopher_thread(void *args)
@@ -370,7 +376,6 @@ int	main(int argc, char **argv)
 		pthread_join(m.threads[i], NULL);
 		i++;
 	}
-	printf("starting program\n");
 
 	free(m.waiter.fork_in_use);
 	free(m.waiter.fork_locks);
