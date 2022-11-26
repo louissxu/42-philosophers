@@ -14,8 +14,11 @@
 
 // Ref: https://randu.org/tutorials/threads/
 
-# define STARVING_BUFFER 3
+# define STARVING_BUFFER 1000
 
+/**
+ * @var	t_input_data::time_to_die
+*/
 typedef struct s_input_data
 {
 	int		number_of_philosophers;
@@ -33,14 +36,26 @@ typedef struct	s_waiter_data
 	BOOL			*fork_in_use;
 	pthread_mutex_t	*fork_locks;
 	BOOL			someone_has_died;
+	int				number_of_full_philosophers;
 }	t_waiter_data;
 
+/**
+ * @struct t_philosopher_data
+ * 
+ * @var t_philosopher_data::state
+ *	The state of the philosopher
+ *	1 eating
+ *	2 sleeping
+ *	3 thinking
+ *	
+*/
 typedef struct	s_philosopher_data
 {
 	int	id;
 	int	fork_l;
 	int	fork_r;
 	int times_eaten;
+	int	state;
 	struct timeval	last_ate;
 }	t_philosopher_data;
 
@@ -84,11 +99,12 @@ typedef struct	s_main_data
 	t_philosopher_data	*philosophers;
 }	t_main_data;
 
-long int	time_delta_ms(struct timeval initial, struct timeval final)
+//REF: https://stackoverflow.com/a/4846569/9160572
+long int	time_delta(struct timeval initial, struct timeval final)
 {
 	long int	delta_ms;
 
-	delta_ms = (final.tv_sec - initial.tv_sec) * 1000 + (final.tv_usec - initial.tv_usec) / 1000;
+	delta_ms = (final.tv_sec - initial.tv_sec) * 1000000 + (final.tv_usec - initial.tv_usec);
 	return (delta_ms);
 }
 
@@ -97,12 +113,22 @@ long int	time_since(struct timeval t)
 	struct timeval	current_time;
 
 	gettimeofday(&current_time, NULL);
-	return (time_delta_ms(t, current_time));
+	return (time_delta(t, current_time));
 }
+
+// long int	time_since(struct timeval t)
+// {
+// 	struct timeval	current_time;
+// 	long int		delta_ms;
+
+// 	gettimeofday(&current_time, NULL);
+// 	delta_ms = (current_time.tv_sec - t.tv_sec) * 1000 + ((current_time.tv_usec - t.tv_usec) / 1000);
+// 	return (delta_ms);
+// }
 
 void	print_line(struct timeval start_time, int philo_name, char *str)
 {
-	printf("%5ld %i %s\n", time_since(start_time), philo_name, str);
+	printf("%5ld %i %s\n", time_since(start_time) / 1000, philo_name, str);
 }
 
 void	print_took_fork(struct timeval start_time, int philo_name, int fork_num)
@@ -175,6 +201,34 @@ BOOL	philo_try_eat(void *args)
 	return (TRUE);
 }
 
+void	philo_eating(void *args)
+{
+	t_thread_data	*t;
+
+	t = (t_thread_data *)args;
+	pthread_mutex_lock(&t->waiter->lock);
+	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
+	{
+		print_line(t->input_data->start_time, t->philo->id, "died");
+		t->waiter->someone_has_died = TRUE;
+		pthread_mutex_unlock(&t->waiter->lock);
+		pthread_exit(NULL);
+	}
+	if (time_since(t->philo->last_ate) < t->input_data->time_to_eat)
+	{
+		pthread_mutex_unlock(&t->waiter->lock);
+		return ;
+	}
+
+	pthread_mutex_unlock(&t->waiter->fork_locks[t->philo->fork_l]);
+	t->waiter->fork_in_use[t->philo->fork_l] = FALSE;
+	pthread_mutex_unlock(&t->waiter->fork_locks[t->philo->fork_r]);
+	t->waiter->fork_in_use[t->philo->fork_r] = FALSE;
+	print_line(t->input_data->start_time, t->philo->id, "is sleeping");
+	t->philo->state = 2;
+	pthread_mutex_unlock(&t->waiter->lock);
+}
+
 void	philo_eat(void *args)
 {
 	t_thread_data	*t;
@@ -187,6 +241,30 @@ void	philo_eat(void *args)
 		// usleep(1); // Necessary?
 		ate_successfully = philo_try_eat(t);
 	}
+}
+
+void	philo_sleeping(void *args)
+{
+	t_thread_data	*t;
+
+	t = (t_thread_data *)args;
+
+	pthread_mutex_lock(&t->waiter->lock);
+	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
+	{
+		print_line(t->input_data->start_time, t->philo->id, "died");
+		t->waiter->someone_has_died = TRUE;
+		pthread_mutex_unlock(&t->waiter->lock);
+		pthread_exit(NULL);
+	}
+	if (time_since(t->philo->last_ate) < t->input_data->time_to_eat + t->input_data->time_to_sleep)
+	{
+		pthread_mutex_unlock(&t->waiter->lock);
+		return ;
+	}
+	print_line(t->input_data->start_time, t->philo->id, "is thinking");
+	t->philo->state = 3;
+	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	philo_sleep(void *args)
@@ -203,6 +281,58 @@ void	philo_sleep(void *args)
 	print_line(t->input_data->start_time, t->philo->id, "is sleeping");
 	pthread_mutex_unlock(&t->waiter->lock);
 	usleep(t->input_data->time_to_sleep * 1000);
+}
+
+void	philo_thinking(void *args)
+{
+	t_thread_data	*t;
+
+	t = (t_thread_data *)args;
+	pthread_mutex_lock(&t->waiter->lock);
+	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
+	{
+		print_line(t->input_data->start_time, t->philo->id, "died");
+		t->waiter->someone_has_died = TRUE;
+		pthread_mutex_unlock(&t->waiter->lock);
+		pthread_exit(NULL);
+	}
+	// If forks are in use
+	if (t->waiter->fork_in_use[t->philo->fork_l] == TRUE || t->waiter->fork_in_use[t->philo->fork_r] == TRUE)
+	{
+		pthread_mutex_unlock(&t->waiter->lock);
+		return ;
+	}
+	// If the forks are the same fork
+	if (t->philo->fork_l == t->philo->fork_r)
+	{
+		pthread_mutex_unlock(&t->waiter->lock);
+		return ;
+	}
+	// If either neighbour is hungrier and one cycle away from dying
+	if ((time_since(t->philo_l->last_ate) > time_since(t->philo->last_ate) && \
+		time_since(t->philo_l->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die) || \
+		(time_since(t->philo_r->last_ate) > time_since(t->philo->last_ate) && \
+		time_since(t->philo_r->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die))
+	{
+		pthread_mutex_unlock(&t->waiter->lock);
+		return ;
+	}
+
+	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_l]);
+	t->waiter->fork_in_use[t->philo->fork_l] = TRUE;
+	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
+	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_r]);
+	t->waiter->fork_in_use[t->philo->fork_r] = TRUE;
+	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
+	print_line(t->input_data->start_time, t->philo->id, "is eating");
+	gettimeofday(&t->philo->last_ate, NULL);
+	t->philo->times_eaten += 1;
+	if (t->philo->times_eaten >= t->input_data->number_of_times_each_philosopher_must_eat && t->input_data->infinite_simulation == FALSE)
+	{
+		t->waiter->number_of_full_philosophers++;
+	}
+	t->philo->state = 1;
+	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	philo_think(void *args)
@@ -227,17 +357,27 @@ void	*philosopher_thread(void *args)
 	t = (t_thread_data *)args;
 	while (TRUE)
 	{
-		if (t->philo->times_eaten >= t->input_data->number_of_times_each_philosopher_must_eat && t->input_data->infinite_simulation == FALSE)
+		if (t->waiter->someone_has_died)
 		{
 			pthread_exit(NULL);
 		}
-		philo_eat(t);
-		if (t->philo->times_eaten >= t->input_data->number_of_times_each_philosopher_must_eat && t->input_data->infinite_simulation == FALSE)
+		else if (t->waiter->number_of_full_philosophers >= t->input_data->number_of_philosophers)
 		{
 			pthread_exit(NULL);
 		}
-		philo_sleep(t);
-		philo_think(t);
+		else if (t->philo->state == 1)
+		{
+			philo_eating(t);
+		}
+		else if (t->philo->state == 2)
+		{
+			philo_sleeping(t);
+		}
+		else
+		{
+			philo_thinking(t);
+		}
+		usleep(100);
 	}
 }
 
@@ -302,9 +442,9 @@ int	main(int argc, char **argv)
 
 	// Input data setup
 	m.input_data.number_of_philosophers = philo_simple_atoi(argv[1]);
-	m.input_data.time_to_die = philo_simple_atoi(argv[2]);
-	m.input_data.time_to_eat = philo_simple_atoi(argv[3]);
-	m.input_data.time_to_sleep = philo_simple_atoi(argv[4]);
+	m.input_data.time_to_die = philo_simple_atoi(argv[2]) * 1000;
+	m.input_data.time_to_eat = philo_simple_atoi(argv[3]) * 1000;
+	m.input_data.time_to_sleep = philo_simple_atoi(argv[4]) * 1000;
 	m.input_data.infinite_simulation = TRUE;
 	if (argc == 6)
 	{
@@ -329,6 +469,7 @@ int	main(int argc, char **argv)
 		i++;
 	}
 	m.waiter.someone_has_died = FALSE;
+	m.waiter.number_of_full_philosophers = 0;
 
 	// Threads and philosophers setup
 
@@ -346,6 +487,7 @@ int	main(int argc, char **argv)
 		}
 
 		m.philosophers[i].times_eaten = 0;
+		m.philosophers[i].state = 3;
 		m.philosophers[i].last_ate = m.input_data.start_time;
 		
 		// if (i == 0)
