@@ -77,7 +77,6 @@ typedef struct	s_main_data
 	t_philosopher_data	*philosophers;
 }	t_main_data;
 
-//REF: https://stackoverflow.com/a/4846569/9160572
 long int	time_delta(struct timeval initial, struct timeval final)
 {
 	long int	delta_ms;
@@ -339,21 +338,6 @@ int	main(int argc, char **argv)
 		m.philosophers[i].state = 3;
 		m.philosophers[i].last_ate = m.input_data.start_time;
 		
-		// if (i == 0)
-		// {
-		// 	main_data.philosophers_data[i].p_r = &main_data.philosophers_data[i + 1];
-		// 	main_data.philosophers_data[i].p_l = &main_data.philosophers_data[main_data.input_data.number_of_philosophers - 1];
-		// }
-		// else if (i == main_data.input_data.number_of_philosophers - 1)
-		// {
-		// 	main_data.philosophers_data[i].p_r = &main_data.philosophers_data[0];
-		// 	main_data.philosophers_data[i].p_l = &main_data.philosophers_data[i - 1];
-		// }
-		// else
-		// {
-		// 	main_data.philosophers_data[i].p_r = &main_data.philosophers_data[i + 1];
-		// 	main_data.philosophers_data[i].p_l = &main_data.philosophers_data[i - 1];
-		// }
 		i++;
 	}
 
