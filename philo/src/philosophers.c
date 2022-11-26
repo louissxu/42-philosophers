@@ -102,7 +102,7 @@ long int	time_since(struct timeval t)
 
 void	print_line(struct timeval start_time, int philo_name, char *str)
 {
-	printf("%5ld Philosopher %i %s\n", time_since(start_time), philo_name, str);
+	printf("%5ld %i %s\n", time_since(start_time), philo_name, str);
 }
 
 void	print_took_fork(struct timeval start_time, int philo_name, int fork_num)
@@ -154,8 +154,10 @@ BOOL	philo_try_eat(void *args)
 
 	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_l]);
 	t->waiter->fork_in_use[t->philo->fork_l] = TRUE;
+	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
 	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_r]);
 	t->waiter->fork_in_use[t->philo->fork_r] = TRUE;
+	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
 	print_line(t->input_data->start_time, t->philo->id, "is eating");
 	pthread_mutex_unlock(&t->waiter->lock);
 
@@ -260,6 +262,30 @@ int	philo_simple_atoi(const char *str)
 		i++;
 	}
 	return (int)(result * post_mult);
+}
+
+void	free_all(t_main_data *m)
+{
+	if (m->waiter.fork_in_use)
+	{
+		free(m->waiter.fork_in_use);
+	}
+	if (m->waiter.fork_locks)
+	{
+		free(m->waiter.fork_locks);
+	}
+	if (m->threads)
+	{
+		free(m->threads);
+	}
+	if (m->thread_data)
+	{
+		free(m->thread_data);
+	}
+	if (m->philosophers)
+	{
+		free(m->philosophers);
+	}
 }
 
 int	main(int argc, char **argv)
@@ -377,10 +403,6 @@ int	main(int argc, char **argv)
 		i++;
 	}
 
-	free(m.waiter.fork_in_use);
-	free(m.waiter.fork_locks);
-	free(m.threads);
-	free(m.thread_data);
-	free(m.philosophers);
+	free_all(&m);
 	return (EXIT_SUCCESS);
 }
