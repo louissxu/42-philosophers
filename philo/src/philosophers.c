@@ -109,17 +109,13 @@ void	philo_eating(void *args)
 	t_thread_data	*t;
 
 	t = (t_thread_data *)args;
-	pthread_mutex_lock(&t->waiter->lock);
 	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
 	{
 		print_line(t->input_data->start_time, t->philo->id, "died");
 		t->waiter->someone_has_died = TRUE;
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
 	}
 	if (time_since(t->philo->last_ate) < t->input_data->time_to_eat)
 	{
-		pthread_mutex_unlock(&t->waiter->lock);
 		return ;
 	}
 
@@ -129,7 +125,6 @@ void	philo_eating(void *args)
 	t->waiter->fork_in_use[t->philo->fork_r] = FALSE;
 	print_line(t->input_data->start_time, t->philo->id, "is sleeping");
 	t->philo->state = 2;
-	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	philo_sleeping(void *args)
@@ -138,22 +133,17 @@ void	philo_sleeping(void *args)
 
 	t = (t_thread_data *)args;
 
-	pthread_mutex_lock(&t->waiter->lock);
 	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
 	{
 		print_line(t->input_data->start_time, t->philo->id, "died");
 		t->waiter->someone_has_died = TRUE;
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
 	}
 	if (time_since(t->philo->last_ate) < t->input_data->time_to_eat + t->input_data->time_to_sleep)
 	{
-		pthread_mutex_unlock(&t->waiter->lock);
 		return ;
 	}
 	print_line(t->input_data->start_time, t->philo->id, "is thinking");
 	t->philo->state = 3;
-	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	philo_thinking(void *args)
@@ -161,24 +151,19 @@ void	philo_thinking(void *args)
 	t_thread_data	*t;
 
 	t = (t_thread_data *)args;
-	pthread_mutex_lock(&t->waiter->lock);
 	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
 	{
 		print_line(t->input_data->start_time, t->philo->id, "died");
 		t->waiter->someone_has_died = TRUE;
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
 	}
 	// If forks are in use
 	if (t->waiter->fork_in_use[t->philo->fork_l] == TRUE || t->waiter->fork_in_use[t->philo->fork_r] == TRUE)
 	{
-		pthread_mutex_unlock(&t->waiter->lock);
 		return ;
 	}
 	// If the forks are the same fork
 	if (t->philo->fork_l == t->philo->fork_r)
 	{
-		pthread_mutex_unlock(&t->waiter->lock);
 		return ;
 	}
 	// If either neighbour is hungrier and one cycle away from dying
@@ -187,7 +172,6 @@ void	philo_thinking(void *args)
 		(time_since(t->philo_r->last_ate) > time_since(t->philo->last_ate) && \
 		time_since(t->philo_r->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die))
 	{
-		pthread_mutex_unlock(&t->waiter->lock);
 		return ;
 	}
 
@@ -205,23 +189,25 @@ void	philo_thinking(void *args)
 		t->waiter->number_of_full_philosophers++;
 	}
 	t->philo->state = 1;
-	pthread_mutex_unlock(&t->waiter->lock);
 }
 
 void	*philosopher_thread(void *args)
 {
 	t_thread_data	*t;
+	BOOL			exit_thread;
 
 	t = (t_thread_data *)args;
+	exit_thread = FALSE;
 	while (TRUE)
 	{
+		pthread_mutex_lock(&t->waiter->lock);
 		if (t->waiter->someone_has_died)
 		{
-			pthread_exit(NULL);
+			exit_thread = TRUE;
 		}
 		else if (t->waiter->number_of_full_philosophers >= t->input_data->number_of_philosophers)
 		{
-			pthread_exit(NULL);
+			exit_thread = TRUE;
 		}
 		else if (t->philo->state == 1)
 		{
@@ -234,6 +220,11 @@ void	*philosopher_thread(void *args)
 		else
 		{
 			philo_thinking(t);
+		}
+		pthread_mutex_unlock(&t->waiter->lock);
+		if (exit_thread)
+		{
+			pthread_exit(NULL);
 		}
 		usleep(100);
 	}
