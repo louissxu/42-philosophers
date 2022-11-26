@@ -68,28 +68,6 @@ typedef struct	s_thread_data
 	t_waiter_data		*waiter;
 }	t_thread_data;
 
-// typedef struct s_philosopher_data
-// {
-// 	int	id;
-// 	int	fork_l;
-// 	int fork_r;
-// 	struct s_philosopher_data	*p_l;
-// 	struct s_philosopher_data	*p_r;
-// 	int times_eaten;
-// 	struct timeval	last_ate;
-// 	t_input_data	*input_data;
-// 	t_waiter_data *waiter;
-// }	t_philosopher_data;
-
-// typedef struct s_main_data
-// {
-// 	t_input_data		input_data;
-// 	pthread_t			*threads;
-// 	t_philosopher_data	*philosophers_data;
-// 	t_waiter_data		waiter;
-// 	// struct timeval		start_time;
-// }	t_main_data;
-
 typedef struct	s_main_data
 {
 	t_input_data	input_data;
@@ -116,16 +94,6 @@ long int	time_since(struct timeval t)
 	return (time_delta(t, current_time));
 }
 
-// long int	time_since(struct timeval t)
-// {
-// 	struct timeval	current_time;
-// 	long int		delta_ms;
-
-// 	gettimeofday(&current_time, NULL);
-// 	delta_ms = (current_time.tv_sec - t.tv_sec) * 1000 + ((current_time.tv_usec - t.tv_usec) / 1000);
-// 	return (delta_ms);
-// }
-
 void	print_line(struct timeval start_time, int philo_name, char *str)
 {
 	printf("%5ld %i %s\n", time_since(start_time) / 1000, philo_name, str);
@@ -134,71 +102,6 @@ void	print_line(struct timeval start_time, int philo_name, char *str)
 void	print_took_fork(struct timeval start_time, int philo_name, int fork_num)
 {
 	printf("%5ld Philosopher %i has taken fork number %i\n", time_since(start_time), philo_name, fork_num);
-}
-
-BOOL	philo_try_eat(void *args)
-{
-	t_thread_data	*t;
-
-	t = (t_thread_data *)args;
-	pthread_mutex_lock(&t->waiter->lock);
-	if (t->waiter->someone_has_died)
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
-		return (FALSE); // Probably not needed as thread will terminate
-	}
-	if (time_since(t->philo->last_ate) > t->input_data->time_to_die)
-	{
-		print_line(t->input_data->start_time, t->philo->id, "died");
-		t->waiter->someone_has_died = TRUE;
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
-		return (FALSE); // Probably not needed
-	}
-	// If forks are in use
-	if (t->waiter->fork_in_use[t->philo->fork_l] == TRUE || t->waiter->fork_in_use[t->philo->fork_r] == TRUE)
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		return (FALSE);
-	}
-	if (t->philo->fork_l == t->philo->fork_r)
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		return (FALSE);
-	}
-
-	// If either neighbour is hungrier and one cycle away from dying
-	if ((time_since(t->philo_l->last_ate) > time_since(t->philo->last_ate) && \
-		time_since(t->philo_l->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die) || \
-		(time_since(t->philo_r->last_ate) > time_since(t->philo->last_ate) && \
-		time_since(t->philo_r->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die))
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		return (FALSE);
-	}
-
-	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_l]);
-	t->waiter->fork_in_use[t->philo->fork_l] = TRUE;
-	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
-	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_r]);
-	t->waiter->fork_in_use[t->philo->fork_r] = TRUE;
-	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
-	print_line(t->input_data->start_time, t->philo->id, "is eating");
-	pthread_mutex_unlock(&t->waiter->lock);
-
-
-	gettimeofday(&t->philo->last_ate, NULL);
-	t->philo->times_eaten += 1;
-	usleep(t->input_data->time_to_eat * 1000);
-
-	pthread_mutex_lock(&t->waiter->lock);
-	pthread_mutex_unlock(&t->waiter->fork_locks[t->philo->fork_l]);
-	t->waiter->fork_in_use[t->philo->fork_l] = FALSE;
-	pthread_mutex_unlock(&t->waiter->fork_locks[t->philo->fork_r]);
-	t->waiter->fork_in_use[t->philo->fork_r] = FALSE;
-	pthread_mutex_unlock(&t->waiter->lock);
-	return (TRUE);
 }
 
 void	philo_eating(void *args)
@@ -229,20 +132,6 @@ void	philo_eating(void *args)
 	pthread_mutex_unlock(&t->waiter->lock);
 }
 
-void	philo_eat(void *args)
-{
-	t_thread_data	*t;
-	BOOL				ate_successfully;
-
-	t = (t_thread_data *)args;
-	ate_successfully = FALSE;
-	while (ate_successfully == FALSE)
-	{
-		// usleep(1); // Necessary?
-		ate_successfully = philo_try_eat(t);
-	}
-}
-
 void	philo_sleeping(void *args)
 {
 	t_thread_data	*t;
@@ -265,22 +154,6 @@ void	philo_sleeping(void *args)
 	print_line(t->input_data->start_time, t->philo->id, "is thinking");
 	t->philo->state = 3;
 	pthread_mutex_unlock(&t->waiter->lock);
-}
-
-void	philo_sleep(void *args)
-{
-	t_thread_data	*t;
-
-	t = (t_thread_data *)args;
-	pthread_mutex_lock(&t->waiter->lock);
-	if (t->waiter->someone_has_died)
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
-	}
-	print_line(t->input_data->start_time, t->philo->id, "is sleeping");
-	pthread_mutex_unlock(&t->waiter->lock);
-	usleep(t->input_data->time_to_sleep * 1000);
 }
 
 void	philo_thinking(void *args)
@@ -332,21 +205,6 @@ void	philo_thinking(void *args)
 		t->waiter->number_of_full_philosophers++;
 	}
 	t->philo->state = 1;
-	pthread_mutex_unlock(&t->waiter->lock);
-}
-
-void	philo_think(void *args)
-{
-	t_thread_data	*t;
-
-	t = (t_thread_data *)args;
-	pthread_mutex_lock(&t->waiter->lock);
-	if (t->waiter->someone_has_died)
-	{
-		pthread_mutex_unlock(&t->waiter->lock);
-		pthread_exit(NULL);
-	}
-	print_line(t->input_data->start_time, t->philo->id, "is thinking");
 	pthread_mutex_unlock(&t->waiter->lock);
 }
 
