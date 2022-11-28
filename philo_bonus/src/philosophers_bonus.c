@@ -1,5 +1,8 @@
 # include "philosophers_bonus.h"
 
+# define SEM_MUTEX "/tmp-main-mutex"
+# define SEM_CHOPSTICKS "/tmp-main-chopsticks"
+
 typedef struct s_input_data
 {
 	int		number_of_philosophers;
@@ -147,38 +150,52 @@ int	philo(t_process_data *p)
 	}
 	else
 	{
+		int errno = 0;
+		printf("thread %i: binding to mutexes\n", p->philo->id);
+		sem_t *sem_mutex = sem_open(SEM_MUTEX, 0);
+		sem_t *sem_chopsticks = sem_open(SEM_CHOPSTICKS, 0);
+		printf("thread %i: bound to mutexes. errno: %i\n", p->philo->id, errno);
+		printf("test values are: %i %i %i\n", p->philo->times_eaten, p->input_data->number_of_times_each_philosopher_must_eat, p->input_data->infinite_simulation);
 		while (p->philo->times_eaten < p->input_data->number_of_times_each_philosopher_must_eat || \
 			p->input_data->infinite_simulation == TRUE)
 		{
-			printf("debug %i thread starting\n", p->philo->id);
-			semaphore_wait(p->com->sem_mutex);
-			semaphore_wait(p->com->sem_chopsticks);
-			printf("thread continuing\n");
+			printf("thread %i: thread starting\n", p->philo->id);
+			semaphore_wait(sem_chopsticks);
+			printf("thread %i: thread has chopstick mutex\n", p->philo->id);
+			semaphore_wait(sem_mutex);
+			printf("thread %i: thread has chopstick and mutex lock - continuing\n", p->philo->id);
 			print_line(p->input_data->start_time, p->philo->id, "took a fork");
 			print_line(p->input_data->start_time, p->philo->id, "took a fork");
 			print_line(p->input_data->start_time, p->philo->id, "is eating");
 			p->philo->times_eaten++;
 			p->philo->dies_at = current_time_plus_delta(p->input_data->time_to_die);
-			semaphore_signal(p->com->sem_mutex);
+			semaphore_signal(sem_mutex);
+			printf("thread %i: mutex lock released\n", p->philo->id);
 
+			printf("thread %i: sleeping for %d usec\n", p->philo->id, p->input_data->time_to_eat);
 			usleep(p->input_data->time_to_eat);
-			semaphore_signal(p->com->sem_chopsticks);
-			semaphore_wait(p->com->sem_mutex);
+			semaphore_signal(sem_chopsticks);
+			printf("thread %i: chopstick lock released\n", p->philo->id);
+			semaphore_wait(sem_mutex);
 			if (p->philo->times_eaten >= p->input_data->number_of_times_each_philosopher_must_eat)
 			{
+				printf("CLEARING OUT PID\n");
+				printf("the previous pid was %i\n", p->com->process_pid[p->philo->id]);
+				printf("the pid pointer address is %p\n", &p->com->process_pid);
 				p->com->number_of_full_philosophers++;
 				p->com->process_pid[p->philo->id] = 0;
-				semaphore_signal(p->com->sem_mutex);
+				printf("the new pid was %i\n", p->com->process_pid[p->philo->id]);
+				semaphore_signal(sem_mutex);
 				printf("exiting thread!\n");
 				exit(0);
 			}
 			print_line(p->input_data->start_time, p->philo->id, "is sleeping");
-			semaphore_signal(p->com->sem_mutex);
+			semaphore_signal(sem_mutex);
 
 			usleep(p->input_data->time_to_sleep);
-			semaphore_wait(p->com->sem_mutex);
+			semaphore_wait(sem_mutex);
 			print_line(p->input_data->start_time, p->philo->id, "is thinking");
-			semaphore_signal(p->com->sem_mutex);
+			semaphore_signal(sem_mutex);
 		}
 		exit(0);
 	}
@@ -218,33 +235,53 @@ int	main(int argc, char **argv)
 
 	// Setup main semaphore
 	// Ref: https://www.cs.auckland.ac.nz/references/unix/digital/APS33DTE/DOCU_010.HTM
-	int oflag = O_CREAT;
+	int oflag = O_CREAT | O_EXCL;
 	// oflag = O_EXCL;
 	mode_t mode = 0644;
 
 	printf("clearing old semaphores\n");
-	m.com.sem_mutex = sem_open("a", oflag, mode, 1);
-	m.com.sem_chopsticks = sem_open("b", oflag, mode, 1);
+	m.com.sem_mutex = sem_open(SEM_MUTEX, 0);
+	m.com.sem_chopsticks = sem_open(SEM_CHOPSTICKS, 0);
 	printf("closing sem mutex %i\n", sem_close(m.com.sem_mutex));
 	printf("closing sem chopstick %i\n", sem_close(m.com.sem_chopsticks));
+	sem_unlink(SEM_MUTEX);
+	sem_unlink(SEM_CHOPSTICKS);
 
 
 	printf("creating mutexes\n");
-	// m.com.sem_mutex = sem_open("/tmp/main-mutex", oflag, mode, 1);
-	m.com.sem_mutex = sem_open("c", oflag, mode, 1);
+	m.com.sem_mutex = sem_open(SEM_MUTEX, oflag, mode, 1);
+	// m.com.sem_mutex = sem_open("a", oflag, mode, 1);
 	printf("starting2\n");
 
 
-	semaphore_wait(m.com.sem_mutex);
-	semaphore_signal(m.com.sem_mutex);
 	printf("setting number of chopstick pairs to be %i\n", m.input_data.number_of_philosophers / 2);
-	// m.com.sem_chopsticks = sem_open("/tmp/main-chopsticks", oflag, mode, m.input_data.number_of_philosophers / 2);
-	m.com.sem_chopsticks = sem_open("d", oflag, mode, m.input_data.number_of_philosophers / 2);
+	m.com.sem_chopsticks = sem_open(SEM_CHOPSTICKS, oflag, mode, m.input_data.number_of_philosophers / 2);
+	// m.com.sem_chopsticks = sem_open(SEM_CHOPSTICKS, oflag, mode, 1);
+	// m.com.sem_chopsticks = sem_open("b", oflag, mode, m.input_data.number_of_philosophers / 2);
 
+	// int sem_mutex_val;
+	// int sem_chopsticks_val;
 
+	// sem_getvalue(m.com.sem_mutex, &sem_mutex_val);
+	// sem_getvalue(m.com.sem_chopsticks, &sem_chopsticks_val);
+	// printf("main: semaphore values: sem_mutex %i    sem_chopsticks %i\n", sem_mutex_val, sem_chopsticks_val);
 
+	// semaphore_wait(m.com.sem_mutex);
+	// semaphore_wait(m.com.sem_chopsticks);
+	semaphore_wait(m.com.sem_mutex);
 	semaphore_wait(m.com.sem_chopsticks);
+
+	// sem_getvalue(m.com.sem_mutex, &sem_mutex_val);
+	// sem_getvalue(m.com.sem_chopsticks, &sem_chopsticks_val);
+	// printf("main: semaphore values: sem_mutex %i    sem_chopsticks %i\n", sem_mutex_val, sem_chopsticks_val);
+
+	semaphore_signal(m.com.sem_mutex);
 	semaphore_signal(m.com.sem_chopsticks);
+
+	// sem_getvalue(m.com.sem_mutex, &sem_mutex_val);
+	// sem_getvalue(m.com.sem_chopsticks, &sem_chopsticks_val);
+	// printf("main: semaphore values: sem_mutex %i    sem_chopsticks %i\n", sem_mutex_val, sem_chopsticks_val);
+	
 	printf("semaphores created and have at least one open\n");
 	m.com.number_of_full_philosophers = 0;
 
@@ -270,10 +307,11 @@ int	main(int argc, char **argv)
 
     // spawn workers
 	m.com.process_pid = malloc(sizeof (*m.com.process_pid) * (m.input_data.number_of_philosophers + 1));
-	printf("herbehersers\n");
+	printf("the pid pointer address is %p\n", &m.com.process_pid);
+	printf("main: locking mutex to setup processes\n");
 	semaphore_wait(m.com.sem_mutex);
+	printf("main: lock taken\n");
 	i = 1;
-	printf("blasefhasefjlsekfj\n");
 	while (i <= m.input_data.number_of_philosophers)
 	{
 		pid = philo(&m.process_data[i]);
@@ -281,19 +319,24 @@ int	main(int argc, char **argv)
 		m.com.process_pid[i] = pid;
 		i++;
 	}
+	printf("main: processes are setup. unlocking mutex\n");
 	semaphore_signal(m.com.sem_mutex);
+	printf("main: unlocked\n");
 
-	printf("getting here\n");
 	while (TRUE)
 	{
 		semaphore_wait(m.com.sem_mutex);
 		rc = 0;
 		i = 1;
-		printf("stuff\n");
+		// printf("main: checker running\n");
 		while (i <= m.input_data.number_of_philosophers)
 		{
-			// printf("the time delta is %ld\n", time_since(m.philo_data[i].dies_at));
-			if (time_since(m.philo_data[i].dies_at) > 0)
+			// printf("process %i pid %i\n", i, m.com.process_pid[i]);
+			if (m.com.process_pid[i] == 0)
+			{
+				printf("pid is gone already\n");
+			}
+			else if (time_since(m.philo_data[i].dies_at) > 0)
 			{
 				// semaphore_wait(m.com.sem_mutex);
 				printf("doing the inside\n");
@@ -312,8 +355,9 @@ int	main(int argc, char **argv)
 				rc = 1;
 				break ;
 			}
+			i++;
 		}
-		printf("stuff2\n");
+		// printf("stuff2\n");
 		if (rc)
 		{
 			break ;
