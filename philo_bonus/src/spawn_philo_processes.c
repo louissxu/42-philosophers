@@ -7,14 +7,14 @@ void	*death_checker(void *arg)
 	d = (t_death_checker_thread_data *)arg;
 	while (TRUE)
 	{
-		sem_wait(d->arg->sem->mutex);
+		// sem_wait(d->arg->sem->mutex);
 		if (philo_time_is_greater_than_zero(philo_time_since(d->dat->time_to_die)) == TRUE)
 		{
 			print_line(d->arg->input->start_time, d->arg->id, "died");
 			sem_post(d->arg->sem->stop);
 			exit(0); //should be able to remove this when the parent process kills the pids
 		}
-		sem_post(d->arg->sem->mutex);
+		// sem_post(d->arg->sem->mutex);
 		usleep(100); // CHECK if this is needed
 		// usleep(1000000);
 	}
@@ -27,7 +27,6 @@ void	run_philo(t_philosopher_arg_data arg)
 	t_death_checker_thread_data	thread_data;
 	int							ret;
 
-	// open_semaphores(arg.sem);
 	dat.times_to_eat = 0;
 	if (arg.input->infinite_simulation == FALSE)
 	{
@@ -61,6 +60,7 @@ void	spawn_philo_processes(t_main_data *m)
 	t_philosopher_arg_data	arg;
 
 	i = 1;
+	sem_wait(m->sem.mutex);
 	while (i <= m->input.number_of_philosophers)
 	{
 		pid = fork();
@@ -78,4 +78,5 @@ void	spawn_philo_processes(t_main_data *m)
 		}
 		i++;
 	}
+	sem_post(m->sem.mutex);
 }

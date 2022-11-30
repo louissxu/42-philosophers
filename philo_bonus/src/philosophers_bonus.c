@@ -24,20 +24,45 @@ void	*stop_checker(void *arg)
 	return (NULL);
 }
 
-int	setup_stop_signal_checker(t_main_data *m)
+void	*full_checker(void *arg)
+{
+	t_main_data	*m;
+	int			i;
+
+	m = (t_main_data *)arg;
+	printf("created full checker, waiting\n");
+	i = 1;
+	while (i <= m->input.number_of_philosophers)
+	{
+		printf("%i people are full\n", i);
+		sem_wait(m->sem.full);
+		i++;
+	}
+	printf("everyone is full now, you can stop\n");
+	sem_post(m->sem.stop);
+	return (NULL);
+}
+
+int	setup_state_checks(t_main_data *m)
 {
 	int			ret;
-	pthread_t	thread;
+	pthread_t	stop_check_thread;
+	pthread_t	full_check_thread;
 
-	ret = pthread_create(&thread, NULL, stop_checker, m);
+	ret = pthread_create(&stop_check_thread, NULL, stop_checker, m);
 	if (ret)
 	{
 		printf("ERROR: Failed to create stop signal checking thread\n");
 		return (1);
 	}
+	ret = pthread_create(&full_check_thread, NULL, full_checker, m);
+	if (ret)
+	{
+		printf("ERROR: Failed to create full checker thread\n");
+		return (1);
+	}
 	return (0);
 }
-
 
 int main(int argc, char **argv)
 {
@@ -54,7 +79,7 @@ int main(int argc, char **argv)
 	{
 		return (EXIT_SUCCESS);
 	}
-	ret = setup_stop_signal_checker(&m);
+	ret = setup_state_checks(&m);
 	if (ret)
 	{
 		return (EXIT_SUCCESS);

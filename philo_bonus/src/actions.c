@@ -9,10 +9,10 @@ void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat)
 	print_line(arg.input->start_time, arg.id, "took a fork");
 	print_line(arg.input->start_time, arg.id, "is eating");
 	dat->time_to_die = philo_time_add(philo_time_now(), arg.input->time_to_die);
-	if (arg.input->infinite_simulation == FALSE)
+	if (arg.input->infinite_simulation == FALSE && dat->times_to_eat >= 0)
 	{
 		dat->times_to_eat--;
-		if (dat->times_to_eat <= 0)
+		if (dat->times_to_eat == 0)
 		{
 			sem_post(arg.sem->full);
 		}
