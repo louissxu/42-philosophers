@@ -7,6 +7,7 @@ INCLUDES = INCLUDES
 
 SRCS_RAW = \
 	parse_input_args.c \
+	setup.c \
 	spawn_philo_processes.c \
 	philo_time.c \
 	print.c \

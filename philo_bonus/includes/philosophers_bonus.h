@@ -4,6 +4,11 @@
 # define TRUE 1
 # define FALSE 0
 
+# define SEM_MUTEX "sem_mutex"
+# define SEM_CHOPSTICKS "sem_chopsticks"
+# define SEM_FULL "sem_full"
+# define SEM_STOP "sem_stop"
+
 # include <stdio.h>
 # include <sys/time.h>
 # include <semaphore.h>
@@ -78,5 +83,8 @@ void	print_line(struct timeval start_time, int philo_name, char *str);
 void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat);
 void	philo_sleep(t_philosopher_arg_data arg);
 void	philo_think(t_philosopher_arg_data arg);
+
+void	setup_semaphores(t_main_data *m);
+void	open_semaphores(t_semaphores *sem);
 
 #endif

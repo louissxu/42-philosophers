@@ -14,7 +14,8 @@ int spawn_child(void)
     printf("printing from child process\n");
     sem_t *sem = sem_open("b", 0);
     sem_wait(sem);
-    printf("doing stuff\n");
+    printf("starting internal child process\n");
+	usleep(1000000);
     printf("exiting child process\n");
     sem_post(sem);
     exit(0);

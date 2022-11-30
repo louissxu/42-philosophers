@@ -27,6 +27,7 @@ void	run_philo(t_philosopher_arg_data arg)
 	t_death_checker_thread_data	thread_data;
 	int							ret;
 
+	open_semaphores(arg.sem);
 	dat.times_to_eat = 0;
 	if (arg.input->infinite_simulation == FALSE)
 	{
@@ -41,11 +42,17 @@ void	run_philo(t_philosopher_arg_data arg)
 		printf("ERROR: Failed to create death checking thread\n");
 		sem_post(arg.sem->stop);
 	}
-	while (dat.times_to_eat > 0 || arg.input->infinite_simulation == TRUE)
+	printf("getting to first\n");
+	if (dat.times_to_eat > 0 || arg.input->infinite_simulation == TRUE)
 	{
 		philo_eat(arg, &dat);
+	}
+	printf("getting to here\n");
+	while (dat.times_to_eat > 0 || arg.input->infinite_simulation == TRUE)
+	{
 		philo_sleep(arg);
 		philo_think(arg);
+		philo_eat(arg, &dat);
 	}
 }
 

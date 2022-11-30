@@ -15,5 +15,9 @@ int main(int argc, char **argv)
 	{
 		return (EXIT_SUCCESS);
 	}
+	setup_semaphores(&m);
 	spawn_philo_processes(&m);
+	// sem_wait(m.sem.stop);
+	// printf("exiting\n");
+	//tear down
 }
