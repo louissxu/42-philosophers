@@ -2,10 +2,7 @@
 
 void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat)
 {
-	open_semaphores(arg.sem);
-	printf("test1\n");
 	sem_wait(arg.sem->mutex);
-	printf("test2\n");
 	sem_wait(arg.sem->chopsticks);
 	print_line(arg.input->start_time, arg.id, "took a fork");
 	sem_wait(arg.sem->chopsticks);
@@ -22,12 +19,12 @@ void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat)
 	}
 	sem_post(arg.sem->mutex);
 	ft_timeval_sleep(arg.input->time_to_eat);
+	sem_post(arg.sem->chopsticks);
+	sem_post(arg.sem->chopsticks);
 }
 
 void	philo_sleep(t_philosopher_arg_data arg)
 {
-	sem_post(arg.sem->chopsticks);
-	sem_post(arg.sem->chopsticks);
 	sem_wait(arg.sem->mutex);
 	print_line(arg.input->start_time, arg.id, "is sleeping");
 	sem_post(arg.sem->mutex);

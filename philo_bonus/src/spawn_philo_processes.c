@@ -12,10 +12,10 @@ void	*death_checker(void *arg)
 		{
 			print_line(d->arg->input->start_time, d->arg->id, "died");
 			sem_post(d->arg->sem->stop);
-			// exit(0);
+			exit(0); //should be able to remove this when the parent process kills the pids
 		}
 		sem_post(d->arg->sem->mutex);
-		usleep(100);
+		usleep(100); // CHECK if this is needed
 		// usleep(1000000);
 	}
 }
@@ -27,7 +27,7 @@ void	run_philo(t_philosopher_arg_data arg)
 	t_death_checker_thread_data	thread_data;
 	int							ret;
 
-	open_semaphores(arg.sem);
+	// open_semaphores(arg.sem);
 	dat.times_to_eat = 0;
 	if (arg.input->infinite_simulation == FALSE)
 	{
@@ -42,12 +42,10 @@ void	run_philo(t_philosopher_arg_data arg)
 		printf("ERROR: Failed to create death checking thread\n");
 		sem_post(arg.sem->stop);
 	}
-	printf("getting to first\n");
 	if (dat.times_to_eat > 0 || arg.input->infinite_simulation == TRUE)
 	{
 		philo_eat(arg, &dat);
 	}
-	printf("getting to here\n");
 	while (dat.times_to_eat > 0 || arg.input->infinite_simulation == TRUE)
 	{
 		philo_sleep(arg);
