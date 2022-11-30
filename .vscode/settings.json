@@ -1,0 +1,11 @@
+{
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+    "editor.rulers": [80, 120],
+    "files.associations": {
+      "libft.h": "c"
+    },
+    "codam-norminette-3.command": "/Users/louis/Library/Python/3.9/bin/norminette",
+  //   "codam-norminette-3.enable": true,
+  }
