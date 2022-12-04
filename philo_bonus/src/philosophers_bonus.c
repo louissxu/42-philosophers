@@ -84,6 +84,7 @@ int main(int argc, char **argv)
 	ret = setup_state_checks(&m);
 	if (ret)
 	{
+		free_mallocs(&m);
 		return (EXIT_SUCCESS);
 	}
 	setup_semaphores(&m);
@@ -104,11 +105,9 @@ int main(int argc, char **argv)
 	printf("Closing open semaphores\n");
 	sem_wait(m.sem.mutex);
 	close_semaphores(&m);
+	free_mallocs(&m);
 	printf("All semaphores closed, exiting\n");
-	exit(0);
-	//sem_post(m.sem.mutex);
-	// sem_wait(m.sem.stop);
-	// printf("exiting\n");
+	return(0);
 	//tear down (semaphores and mallocs)
 	// add conditional teardowns to higher up
 }

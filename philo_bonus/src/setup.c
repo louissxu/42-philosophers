@@ -39,15 +39,3 @@ void	open_semaphores(t_semaphores *sem)
 	sem->full = sem_open(SEM_CHOPSTICKS, 0);
 	sem->stop = sem_open(SEM_CHOPSTICKS, 0);
 }
-
-void	close_semaphores(t_main_data *m)
-{
-	sem_close(m->sem.mutex);
-	sem_unlink(SEM_MUTEX);
-	sem_close(m->sem.chopsticks);
-	sem_unlink(SEM_CHOPSTICKS);
-	sem_close(m->sem.full);
-	sem_unlink(SEM_FULL);
-	sem_close(m->sem.stop);
-	sem_unlink(SEM_STOP);
-}

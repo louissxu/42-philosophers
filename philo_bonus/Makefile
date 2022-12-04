@@ -13,6 +13,7 @@ SRCS_RAW = \
 	print.c \
 	actions.c \
 	sleep.c \
+	clean_up.c \
 	philosophers_bonus.c
 
 SRC_DIR = src
