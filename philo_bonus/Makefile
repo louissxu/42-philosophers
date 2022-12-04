@@ -6,10 +6,12 @@ CFLAGS = -Wall -Wextra -Werror
 INCLUDES = INCLUDES
 
 SRCS_RAW = \
-	parse_input_args.c \
-	setup.c \
-	spawn_philo_processes.c \
-	philo_time.c \
+	parse_inputs.c \
+	setup_semaphores.c \
+	setup_state_checks.c \
+	spawn_process.c \
+	philo_time_1.c \
+	philo_time_2.c \
 	print.c \
 	actions.c \
 	sleep.c \
