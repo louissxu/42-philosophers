@@ -20,7 +20,9 @@ void	*stop_checker(void *arg)
 	printf("created stop checker, waiting\n");
 	sem_wait(m->sem.stop);
 	printf("stop checker proceeded\n");
+	sem_wait(m->sem.mutex);
 	kill_philo_processes(m);
+	sem_post(m->sem.mutex);
 	return (NULL);
 }
 
@@ -86,17 +88,24 @@ int main(int argc, char **argv)
 	}
 	setup_semaphores(&m);
 	//sem_wait(m.sem.mutex);
+	usleep(1000);
 	spawn_philo_processes(&m);
+	// usleep(10000);
 
 	printf("doing the wait\n");
 	int i = 1;
 	while (i <= m.input.number_of_philosophers)
 	{
+		printf("waiting for pid %i\n", m.philo_pid[i]);
 		waitpid(m.philo_pid[i], &ret, 0);
 		i++;
 	}
-	printf("All pid's have exited. Exiting program.");
-
+	printf("All pid's have exited. Exiting program.\n");
+	printf("Closing open semaphores\n");
+	sem_wait(m.sem.mutex);
+	close_semaphores(&m);
+	printf("All semaphores closed, exiting\n");
+	exit(0);
 	//sem_post(m.sem.mutex);
 	// sem_wait(m.sem.stop);
 	// printf("exiting\n");

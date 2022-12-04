@@ -87,5 +87,6 @@ void	philo_think(t_philosopher_arg_data arg);
 
 void	setup_semaphores(t_main_data *m);
 void	open_semaphores(t_semaphores *sem);
+void	close_semaphores(t_main_data *m);
 
 #endif

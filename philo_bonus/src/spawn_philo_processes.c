@@ -12,7 +12,7 @@ void	*death_checker(void *arg)
 		{
 			print_line(d->arg->input->start_time, d->arg->id, "died");
 			sem_post(d->arg->sem->stop);
-			exit(0); //should be able to remove this when the parent process kills the pids
+			// exit(0); //should be able to remove this when the parent process kills the pids
 		}
 		// sem_post(d->arg->sem->mutex);
 		usleep(100); // CHECK if this is needed
@@ -61,6 +61,7 @@ void	spawn_philo_processes(t_main_data *m)
 
 	i = 1;
 	sem_wait(m->sem.mutex);
+	// usleep(10000);
 	while (i <= m->input.number_of_philosophers)
 	{
 		pid = fork();
@@ -77,6 +78,7 @@ void	spawn_philo_processes(t_main_data *m)
 			exit(0);
 		}
 		i++;
+		usleep(100);
 	}
 	sem_post(m->sem.mutex);
 }
