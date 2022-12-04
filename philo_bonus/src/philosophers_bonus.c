@@ -17,7 +17,6 @@ int	main(int argc, char **argv)
 {
 	t_main_data	m;
 	int			ret;
-	int			i;
 
 	ret = parse_input_args(argc, argv, &m);
 	if (ret)
