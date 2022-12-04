@@ -2,9 +2,7 @@
 
 void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat)
 {
-	print_line(arg.input->start_time, arg.id, "debug waiting for mutex");
 	sem_wait(arg.sem->mutex);
-	print_line(arg.input->start_time, arg.id, "debug waiting for fork 1");
 	sem_wait(arg.sem->chopsticks);
 	print_line(arg.input->start_time, arg.id, "took a fork");
 	sem_wait(arg.sem->chopsticks);
@@ -16,9 +14,7 @@ void	philo_eat(t_philosopher_arg_data arg, t_philosopher_own_data *dat)
 		(dat->times_to_eat)--;
 		if (dat->times_to_eat == 0)
 		{
-			print_line(arg.input->start_time, arg.id, "debug believes he is full");
 			sem_post(arg.sem->full);
-			// exit(0);
 		}
 	}
 	sem_post(arg.sem->mutex);
