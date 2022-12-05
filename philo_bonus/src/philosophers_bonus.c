@@ -24,13 +24,13 @@ int	main(int argc, char **argv)
 	ret = malloc_main_data(&m);
 	if (ret)
 		return (EXIT_SUCCESS);
+	setup_semaphores(&m);
 	ret = setup_state_checks(&m);
 	if (ret)
 	{
 		free_mallocs(&m);
 		return (EXIT_SUCCESS);
 	}
-	setup_semaphores(&m);
 	usleep(1000);
 	spawn_philo_processes(&m);
 	wait_for_all_processes_to_exit(&m);
