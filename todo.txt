@@ -1,0 +1,5 @@
+Find bus error
+Switch to using quit semaphore rather than watching all the pids?
+Or do the quitting pids in order and have no pids quit on their own
+Norm
+Submit
