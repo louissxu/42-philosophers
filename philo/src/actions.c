@@ -32,7 +32,8 @@ void	philo_sleeping(void *args)
 		print_line(t->input_data->start_time, t->philo->id, "died");
 		t->waiter->someone_has_died = TRUE;
 	}
-	if (time_since(t->philo->last_ate) < t->input_data->time_to_eat + t->input_data->time_to_sleep)
+	if (time_since(t->philo->last_ate) < \
+	t->input_data->time_to_eat + t->input_data->time_to_sleep)
 	{
 		return ;
 	}

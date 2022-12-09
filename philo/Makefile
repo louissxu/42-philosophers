@@ -7,9 +7,11 @@ INCLUDES = INCLUDES
 
 SRCS_RAW = \
 	parse.c \
+	setup.c \
 	time.c \
 	print.c \
 	actions.c \
+	clean_up.c \
 	philosophers.c
 
 SRC_DIR = src

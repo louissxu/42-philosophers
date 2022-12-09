@@ -22,3 +22,32 @@ int	philo_simple_atoi(const char *str)
 	}
 	return (int)(result * post_mult);
 }
+
+BOOL	parse_args(int argc, char **argv, t_main_data *m)
+{
+	int	ret;
+
+	if (argc < 5 || argc > 6)
+	{
+		printf ("Error: Number of args needs to be 4 or 5\n");
+		return (TRUE);
+	}
+	m->input_data.number_of_philosophers = philo_simple_atoi(argv[1]);
+	m->input_data.time_to_die = philo_simple_atoi(argv[2]) * 1000;
+	m->input_data.time_to_eat = philo_simple_atoi(argv[3]) * 1000;
+	m->input_data.time_to_sleep = philo_simple_atoi(argv[4]) * 1000;
+	m->input_data.infinite_simulation = TRUE;
+	if (argc == 6)
+	{
+		m->input_data.infinite_simulation = FALSE;
+		m->input_data.number_of_times_each_philosopher_must_eat = \
+			philo_simple_atoi(argv[5]);
+	}
+	ret = gettimeofday(&m->input_data.start_time, NULL);
+	if (ret)
+	{
+		printf("Error: Failure of gettimeofday, return value: %d\n", ret);
+		return (TRUE);
+	}
+	return (FALSE);
+}
