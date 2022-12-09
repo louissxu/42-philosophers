@@ -7,9 +7,12 @@ static void	kill_philo_processes(t_main_data *m)
 	i = 1;
 	while (i <= m->input.number_of_philosophers)
 	{
+		printf("killing process %i\n", i);
+		printf("it's pid is at %i\n", m->philo_pid[i]);
 		kill(m->philo_pid[i], SIGTERM);
 		i++;
 	}
+	printf("finished killing processes\n");
 }
 
 static void	*stop_checker(void *arg)
@@ -20,9 +23,9 @@ static void	*stop_checker(void *arg)
 	printf("created stop checker, waiting\n");
 	sem_wait(m->sem.stop);
 	printf("stop checker proceeded\n");
-	sem_wait(m->sem.mutex);
+	// sem_wait(m->sem.mutex);
 	kill_philo_processes(m);
-	sem_post(m->sem.mutex);
+	// sem_post(m->sem.mutex);
 	return (NULL);
 }
 
@@ -36,8 +39,8 @@ static void	*full_checker(void *arg)
 	i = 1;
 	while (i <= m->input.number_of_philosophers)
 	{
-		printf("%i people are full\n", i);
 		sem_wait(m->sem.full);
+		printf("%i people are full\n", i);
 		i++;
 	}
 	printf("everyone is full now, you can stop\n");
