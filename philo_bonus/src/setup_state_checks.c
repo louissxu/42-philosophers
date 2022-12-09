@@ -18,9 +18,7 @@ static void	*stop_checker(void *arg)
 
 	m = (t_main_data *)arg;
 	sem_wait(m->sem.stop);
-	// sem_wait(m->sem.mutex);
 	kill_philo_processes(m);
-	// sem_post(m->sem.mutex);
 	return (NULL);
 }
 

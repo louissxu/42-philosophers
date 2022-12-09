@@ -69,7 +69,6 @@ void	spawn_philo_processes(t_main_data *m)
 	sem_wait(m->sem.mutex);
 	while (i <= m->input.number_of_philosophers)
 	{
-
 		pid = fork();
 		if (pid)
 		{
@@ -84,7 +83,6 @@ void	spawn_philo_processes(t_main_data *m)
 			exit(0);
 		}
 		i++;
-		// usleep(100);
 	}
 	sem_post(m->sem.mutex);
 }
