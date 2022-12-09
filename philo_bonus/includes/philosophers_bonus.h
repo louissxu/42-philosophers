@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lxu <marvin@42.fr>                         +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/11/22 15:00:32 by lxu               #+#    #+#             */
+/*   Updated: 2022/11/22 15:00:34 by lxu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef PHILOSOPHERS_BONUS_H
 
 # define BOOL int
@@ -92,15 +104,12 @@ long int		philo_time_to_ms(struct timeval t);
 long int		philo_ms_since(struct timeval t);
 BOOL			philo_time_is_greater_than_zero(struct timeval t);
 
-
-
 void			ft_timeval_sleep(struct timeval t);
 
 void			print_line(struct timeval start_time, int philo_name, \
 					char *str);
 void			print_incorrect_arg_count_error_message(void);
 void			print_small_time_values_warn_message(void);
-
 
 void			free_mallocs(t_main_data *m);
 

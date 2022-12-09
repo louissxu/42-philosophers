@@ -13,7 +13,6 @@
 #include "philosophers.h"
 
 // Ref: https://randu.org/tutorials/threads/
-
 void	*philosopher_thread(void *args)
 {
 	t_thread_data	*t;
