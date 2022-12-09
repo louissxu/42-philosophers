@@ -6,6 +6,10 @@ CFLAGS = -Wall -Wextra -Werror
 INCLUDES = INCLUDES
 
 SRCS_RAW = \
+	parse.c \
+	time.c \
+	print.c \
+	actions.c \
 	philosophers.c
 
 SRC_DIR = src
