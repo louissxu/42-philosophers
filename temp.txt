@@ -1,2 +1,0 @@
-https://github.com/barimehdi77/Philosophers/tree/main/philo_bonus
-https://github.com/JaeSeoKim/philosophers/tree/master/philo_bonus/src
