@@ -10,8 +10,10 @@ void	*death_checker(void *arg)
 		if (philo_time_is_greater_than_zero(\
 			philo_time_since(d->dat->time_to_die)))
 		{
+			// sem_wait(d->arg->sem->mutex);
 			print_line(d->arg->input->start_time, d->arg->id, "died");
 			sem_post(d->arg->sem->stop);
+			usleep(1000000);
 		}
 	}
 }
