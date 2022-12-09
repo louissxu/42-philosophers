@@ -73,6 +73,7 @@ int				parse_input_args(int argc, char **argv, t_main_data *m);
 int				malloc_main_data(t_main_data *m);
 
 void			setup_semaphores(t_main_data *m);
+void			clean_up_semaphores(void);
 
 int				setup_state_checks(t_main_data *m);
 
@@ -98,8 +99,6 @@ void	print_incorrect_arg_count_error_message(void);
 void	print_small_time_values_warn_message(void);
 
 
-
-void	close_semaphores(t_main_data *m);
 void	free_mallocs(t_main_data *m);
 
 #endif

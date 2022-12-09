@@ -8,7 +8,9 @@ void	wait_for_all_processes_to_exit(t_main_data *m)
 	i = 1;
 	while (i <= m->input.number_of_philosophers)
 	{
+		printf("waiting for pid %i to exit\n", m->philo_pid[i]);
 		waitpid(m->philo_pid[i], &ignore_ret, 0);
+		printf("success, pid %i was seen to close\n", m->philo_pid[i]);
 		i++;
 	}
 }
@@ -34,8 +36,11 @@ int	main(int argc, char **argv)
 	usleep(1000);
 	spawn_philo_processes(&m);
 	wait_for_all_processes_to_exit(&m);
-	sem_wait(m.sem.mutex);
-	close_semaphores(&m);
+	// sem_wait(m.sem.mutex);
+	printf("saw all processes close\n");
+	clean_up_semaphores();
+	printf("semaphores closed\n");
 	free_mallocs(&m);
+	printf("mallocs free-ed\n");
 	return (0);
 }

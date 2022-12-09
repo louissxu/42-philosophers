@@ -1,6 +1,6 @@
 #include "philosophers_bonus.h"
 
-static void	clean_up_zombie_semaphores(void)
+void	clean_up_semaphores(void)
 {
 	sem_t	*s_ptr;
 	int		i;
@@ -24,7 +24,7 @@ static void	clean_up_zombie_semaphores(void)
 
 void	setup_semaphores(t_main_data *m)
 {
-	clean_up_zombie_semaphores();
+	clean_up_semaphores();
 	m->sem.mutex = sem_open(SEM_MUTEX, O_CREAT | O_EXCL, 0600, 1);
 	m->sem.chopsticks = sem_open(SEM_CHOPSTICKS, O_CREAT | O_EXCL, 0600, \
 		m->input.number_of_philosophers);
