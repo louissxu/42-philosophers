@@ -84,7 +84,7 @@ void	spawn_philo_processes(t_main_data *m)
 			exit(0);
 		}
 		i++;
-		usleep(100);
+		// usleep(100);
 	}
 	sem_post(m->sem.mutex);
 }
