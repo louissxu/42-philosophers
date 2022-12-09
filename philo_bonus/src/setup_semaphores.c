@@ -4,15 +4,16 @@ void	clean_up_semaphores(void)
 {
 	sem_t	*s_ptr;
 	int		i;
-	char	*sem_names[4];
+	char	*sem_names[5];
 	char	*s_name;
 
 	sem_names[0] = SEM_MUTEX;
 	sem_names[1] = SEM_CHOPSTICKS;
 	sem_names[2] = SEM_FULL;
 	sem_names[3] = SEM_STOP;
+	sem_names[4] = SEM_FIRST_TO_DIE;
 	i = 0;
-	while (i < 4)
+	while (i < 5)
 	{
 		s_name = sem_names[i];
 		s_ptr = sem_open(s_name, 0);
@@ -30,4 +31,5 @@ void	setup_semaphores(t_main_data *m)
 		m->input.number_of_philosophers);
 	m->sem.full = sem_open(SEM_FULL, O_CREAT | O_EXCL, 0600, 0);
 	m->sem.stop = sem_open(SEM_STOP, O_CREAT | O_EXCL, 0600, 0);
+	m->sem.first_to_die = sem_open(SEM_FIRST_TO_DIE, O_CREAT | O_EXCL, 0600, 1);
 }

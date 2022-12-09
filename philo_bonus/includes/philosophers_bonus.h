@@ -8,6 +8,7 @@
 # define SEM_CHOPSTICKS "sem_chopsticks"
 # define SEM_FULL "sem_full"
 # define SEM_STOP "sem_stop"
+# define SEM_FIRST_TO_DIE "sem_first_to_die"
 
 # include <stdio.h>
 # include <sys/time.h>
@@ -35,6 +36,7 @@ typedef struct s_semaphores
 	sem_t	*chopsticks;
 	sem_t	*full;
 	sem_t	*stop;
+	sem_t	*first_to_die;
 }	t_semaphores;
 
 typedef struct s_philosopher_arg_data
