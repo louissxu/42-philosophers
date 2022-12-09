@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lxu <marvin@42.fr>                         +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/12/10 00:19:32 by lxu               #+#    #+#             */
+/*   Updated: 2022/12/10 00:19:34 by lxu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philosophers.h"
 
 int	philo_simple_atoi(const char *str)
@@ -20,7 +32,7 @@ int	philo_simple_atoi(const char *str)
 		result += str[i] - '0';
 		i++;
 	}
-	return (int)(result * post_mult);
+	return ((int)(result * post_mult));
 }
 
 BOOL	parse_args(int argc, char **argv, t_main_data *m)

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lxu <marvin@42.fr>                         +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/12/10 00:19:32 by lxu               #+#    #+#             */
+/*   Updated: 2022/12/10 00:19:34 by lxu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philosophers.h"
 
 void	philo_eating(void *args)
@@ -41,6 +53,29 @@ void	philo_sleeping(void *args)
 	t->philo->state = 3;
 }
 
+BOOL	philo_thinking_early_return_conditions(t_thread_data *t)
+{
+	if (t->waiter->fork_in_use[t->philo->fork_l] == TRUE || \
+		t->waiter->fork_in_use[t->philo->fork_r] == TRUE)
+	{
+		return (TRUE);
+	}
+	if (t->philo->fork_l == t->philo->fork_r)
+	{
+		return (TRUE);
+	}
+	if ((time_since(t->philo_l->last_ate) > time_since(t->philo->last_ate) && \
+		time_since(t->philo_l->last_ate) + t->input_data->time_to_eat + \
+		STARVING_BUFFER > t->input_data->time_to_die) || \
+		(time_since(t->philo_r->last_ate) > time_since(t->philo->last_ate) && \
+		time_since(t->philo_r->last_ate) + t->input_data->time_to_eat + \
+		STARVING_BUFFER > t->input_data->time_to_die))
+	{
+		return (TRUE);
+	}
+	return (FALSE);
+}
+
 void	philo_thinking(void *args)
 {
 	t_thread_data	*t;
@@ -51,24 +86,8 @@ void	philo_thinking(void *args)
 		print_line(t->input_data->start_time, t->philo->id, "died");
 		t->waiter->someone_has_died = TRUE;
 	}
-	// If forks are in use
-	if (t->waiter->fork_in_use[t->philo->fork_l] == TRUE || t->waiter->fork_in_use[t->philo->fork_r] == TRUE)
-	{
+	if (philo_thinking_early_return_conditions(t))
 		return ;
-	}
-	// If the forks are the same fork
-	if (t->philo->fork_l == t->philo->fork_r)
-	{
-		return ;
-	}
-	// If either neighbour is hungrier and one cycle away from dying
-	if ((time_since(t->philo_l->last_ate) > time_since(t->philo->last_ate) && \
-		time_since(t->philo_l->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die) || \
-		(time_since(t->philo_r->last_ate) > time_since(t->philo->last_ate) && \
-		time_since(t->philo_r->last_ate) + t->input_data->time_to_eat + STARVING_BUFFER > t->input_data->time_to_die))
-	{
-		return ;
-	}
 	pthread_mutex_lock(&t->waiter->fork_locks[t->philo->fork_l]);
 	t->waiter->fork_in_use[t->philo->fork_l] = TRUE;
 	print_line(t->input_data->start_time, t->philo->id, "has taken a fork");
@@ -78,9 +97,9 @@ void	philo_thinking(void *args)
 	print_line(t->input_data->start_time, t->philo->id, "is eating");
 	gettimeofday(&t->philo->last_ate, NULL);
 	t->philo->times_eaten += 1;
-	if (t->philo->times_eaten >= t->input_data->number_of_times_each_philosopher_must_eat && t->input_data->infinite_simulation == FALSE)
-	{
+	if (t->philo->times_eaten >= \
+	t->input_data->number_of_times_each_philosopher_must_eat && \
+	t->input_data->infinite_simulation == FALSE)
 		t->waiter->number_of_full_philosophers++;
-	}
 	t->philo->state = 1;
 }

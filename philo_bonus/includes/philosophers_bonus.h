@@ -66,7 +66,7 @@ typedef struct s_main_data
 }	t_main_data;
 
 void			philo_eat(t_philosopher_arg_data arg, \
-	t_philosopher_own_data *dat);
+					t_philosopher_own_data *dat);
 void			philo_sleep(t_philosopher_arg_data arg);
 void			philo_think(t_philosopher_arg_data arg);
 
@@ -94,13 +94,14 @@ BOOL			philo_time_is_greater_than_zero(struct timeval t);
 
 
 
-void	ft_timeval_sleep(struct timeval t);
+void			ft_timeval_sleep(struct timeval t);
 
-void	print_line(struct timeval start_time, int philo_name, char *str);
-void	print_incorrect_arg_count_error_message(void);
-void	print_small_time_values_warn_message(void);
+void			print_line(struct timeval start_time, int philo_name, \
+					char *str);
+void			print_incorrect_arg_count_error_message(void);
+void			print_small_time_values_warn_message(void);
 
 
-void	free_mallocs(t_main_data *m);
+void			free_mallocs(t_main_data *m);
 
 #endif

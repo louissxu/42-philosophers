@@ -88,23 +88,24 @@ typedef struct s_main_data
 long int	time_delta(struct timeval initial, struct timeval final);
 long int	time_since(struct timeval t);
 
-void	print_line(struct timeval start_time, int philo_name, char *str);
-void	print_took_fork(struct timeval start_time, int philo_name, int fork_num);
+void		print_line(struct timeval start_time, int philo_name, char *str);
+void		print_took_fork(struct timeval start_time, int philo_name, \
+				int fork_num);
 
-void	philo_eating(void *args);
-void	philo_sleeping(void *args);
-void	philo_thinking(void *args);
+void		philo_eating(void *args);
+void		philo_sleeping(void *args);
+void		philo_thinking(void *args);
 
-int		philo_simple_atoi(const char *str);
-BOOL	parse_args(int argc, char **argv, t_main_data *m);
-BOOL	setup_mallocs(t_main_data *m);
-void	setup_waiter(t_main_data *m);
-void	setup_philosophers(t_main_data *m);
-void	setup_thread_data(t_main_data *m);
-BOOL	setup_threads(t_main_data *m);
+int			philo_simple_atoi(const char *str);
+BOOL		parse_args(int argc, char **argv, t_main_data *m);
+BOOL		setup_mallocs(t_main_data *m);
+void		setup_waiter(t_main_data *m);
+void		setup_philosophers(t_main_data *m);
+void		setup_thread_data(t_main_data *m);
+BOOL		setup_threads(t_main_data *m);
 
-void	free_all(t_main_data *m);
+void		free_all(t_main_data *m);
 
-void	*philosopher_thread(void *args);
+void		*philosopher_thread(void *args);
 
 #endif

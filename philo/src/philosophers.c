@@ -27,10 +27,8 @@ void	*philosopher_thread(void *args)
 		if (t->waiter->someone_has_died)
 			exit_thread = TRUE;
 		else if (t->waiter->number_of_full_philosophers >= \
-			t->input_data->number_of_philosophers)
-		{
+				t->input_data->number_of_philosophers)
 			exit_thread = TRUE;
-		}
 		else if (t->philo->state == 1)
 			philo_eating(t);
 		else if (t->philo->state == 2)
@@ -59,28 +57,24 @@ void	bind_to_all_threads(t_main_data *m)
 int	main(int argc, char **argv)
 {
 	t_main_data		m;
-	BOOL			error;
 
-	error = parse_args(argc, argv, &m);
-	if (error)
+	if (parse_args(argc, argv, &m))
 	{
-		return (EXIT_SUCCESS);
+		return (EXIT_FAILURE);
 	}
-	error = setup_mallocs(&m);
-	if (error)
+	if (setup_mallocs(&m))
 	{
 		free_all(&m);
-		return (EXIT_SUCCESS);
+		return (EXIT_FAILURE);
 	}
 	setup_waiter(&m);
 	setup_philosophers(&m);
 	setup_thread_data(&m);
 	pthread_mutex_lock(&m.waiter.lock);
-	error = setup_threads(&m);
-	if (error)
+	if (setup_threads(&m))
 	{
 		free_all(&m);
-		return (EXIT_SUCCESS);
+		return (EXIT_FAILURE);
 	}
 	pthread_mutex_unlock(&m.waiter.lock);
 	bind_to_all_threads(&m);

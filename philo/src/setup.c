@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lxu <marvin@42.fr>                         +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/12/10 00:19:32 by lxu               #+#    #+#             */
+/*   Updated: 2022/12/10 00:19:34 by lxu              ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philosophers.h"
 
 BOOL	setup_mallocs(t_main_data *m)
@@ -5,7 +17,6 @@ BOOL	setup_mallocs(t_main_data *m)
 	int	num_cells;
 
 	num_cells = m->input_data.number_of_philosophers + 1;
-
 	m->waiter.fork_in_use = malloc(sizeof (BOOL) * num_cells);
 	m->waiter.fork_locks = malloc(sizeof (pthread_mutex_t) * num_cells);
 	m->philosophers = malloc(sizeof (t_philosopher_data) * num_cells);
@@ -70,7 +81,8 @@ void	setup_thread_data(t_main_data *m)
 		m->thread_data[i].philo_l = &m->philosophers[i - 1];
 		if (i == 1)
 		{
-			m->thread_data[i].philo_l = &m->philosophers[m->input_data.number_of_philosophers];
+			m->thread_data[i].philo_l = \
+				&m->philosophers[m->input_data.number_of_philosophers];
 		}
 		m->thread_data[i].philo_r = &m->philosophers[i + 1];
 		if (i == m->input_data.number_of_philosophers)
@@ -91,7 +103,8 @@ BOOL	setup_threads(t_main_data *m)
 	i = 1;
 	while (i <= m->input_data.number_of_philosophers)
 	{
-		ret = pthread_create(&m->threads[i], NULL, philosopher_thread, &m->thread_data[i]);
+		ret = pthread_create(&m->threads[i], \
+			NULL, philosopher_thread, &m->thread_data[i]);
 		if (ret)
 		{
 			printf("error: pthread_create, i: %i  rc: %d\n", i, ret);
